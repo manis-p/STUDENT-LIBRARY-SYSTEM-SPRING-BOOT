@@ -29,7 +29,7 @@ public class SecurityConfig {
         http.csrf().disable()
             .authorizeHttpRequests()
              
-            // ✅ Public endpoints
+            //  Public endpoints
             .requestMatchers(
                 "/api/user/signup",
                 "/api/user/login",
@@ -37,13 +37,13 @@ public class SecurityConfig {
                 "/api/user/reset-password"
             ).permitAll()
 
-            // 🔐 Admin protected endpoints
+            //Admin protected endpoints
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-            // 🔐 Authenticated user endpoints
+            // Authenticated user endpoints
             .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
 
-            // 🔐 Any other request
+            // Any other request
             .anyRequest().authenticated()
 
             .and()

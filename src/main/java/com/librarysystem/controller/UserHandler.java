@@ -17,13 +17,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.librarysystem.dto.AuthRequest;
-import com.librarysystem.dto.AuthResponse;
+import com.librarysystem.dto.AuthResponseWithRefreshToken;
 import com.librarysystem.dto.SignupRequestDto;
 import com.librarysystem.dto.UpdateProfileRequestDto;
+import com.librarysystem.model.ActiveAccessToken;
+import com.librarysystem.model.RefreshToken;
 import com.librarysystem.model.Role;
 import com.librarysystem.model.User;
+import com.librarysystem.repository.ActiveAccessTokenRepository;
+import com.librarysystem.repository.UserRepository;
 import com.librarysystem.security.service.CustomUserDetails;
 import com.librarysystem.security.service.CustomUserDetailsService;
+import com.librarysystem.security.service.RefreshTokenService;
 import com.librarysystem.service.UserServiceImpl;
 import com.librarysystem.util.JwtUtil;
 
@@ -38,6 +43,15 @@ public class UserHandler {
 	private AuthenticationManager authenticationManager;
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
+
+	@Autowired
+	private ActiveAccessTokenRepository activeAccessTokenRepository;
+
+	@Autowired
+	private RefreshTokenService refreshTokenService;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@PostMapping("/signup")
 	public ResponseEntity<?> userSignUp(@RequestBody SignupRequestDto signupRequestDto) {
@@ -60,19 +74,34 @@ public class UserHandler {
 					new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 		} catch (BadCredentialsException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-		}catch (Exception e) {
-		    e.printStackTrace(); 
-		    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong: " + e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Something went wrong: " + e.getMessage());
 		}
 		System.out.println(" heloo manish2");
-		 System.out.println(authRequest.getEmail() + " "+ authRequest.getPassword());
+		System.out.println(authRequest.getEmail() + " " + authRequest.getPassword());
 		UserDetails userDetails = customUserDetailsService.loadUserByUsername(authRequest.getEmail());
-	    CustomUserDetails customDetails = (CustomUserDetails) userDetails;
-	    Role userRole = customDetails.getUser().getRole();
-	    System.out.println("here  i am manish jha ");
+		CustomUserDetails customDetails = (CustomUserDetails) userDetails;
+		Role userRole = customDetails.getUser().getRole();
+		System.out.println("here  i am manish jha ");
 		final String jwt = jwtUtil.generateToken(userDetails.getUsername(), userRole);
 		System.out.println(jwt);
-		return ResponseEntity.ok(new AuthResponse(jwt));
+		RefreshToken refreshToken = refreshTokenService.createRefreshToken(customDetails.getUser().getId());
+
+		//save all the active token to the DB 
+		ActiveAccessToken activeToken = new ActiveAccessToken();
+		User user = userRepository.findById(customDetails.getUser().getId())
+				.orElseThrow(() -> new RuntimeException("User not found"));
+		activeToken.setUser(user);
+		activeToken.setToken(jwt);
+		activeToken.setExpiryDate(jwtUtil.getExpiryFromToken(jwt));
+		activeAccessTokenRepository.save(activeToken);
+
+		// Prepare response with both tokens
+		AuthResponseWithRefreshToken response = new AuthResponseWithRefreshToken(jwt, refreshToken.getToken());
+
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/profile")

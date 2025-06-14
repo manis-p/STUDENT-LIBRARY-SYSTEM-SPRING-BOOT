@@ -107,7 +107,14 @@
 			<artifactId>student-library-system-1.0.jar</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		
+		<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>7.4</version>
+</dependency>
 	</dependencies>
+	
 
 	<build>
 		<plugins>

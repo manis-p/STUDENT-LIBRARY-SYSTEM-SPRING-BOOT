@@ -36,7 +36,7 @@ public class UserServiceImpl implements userInterface {
 	       String encodedPassword = passwordEncoder.encode(rawPassword);
 	       user.setPassword(encodedPassword);
 	       user.setRole(signupRequestDto.getRole());   
-	       System.out.println(rawPassword);
+	       //System.out.println(rawPassword);
 	      return  userRepository.save(user);
 	    }
 	/*   no used 
@@ -67,7 +67,7 @@ public class UserServiceImpl implements userInterface {
 		         user.setPassword(dto.getPassword());
 		         user.setPhone(dto.getPhone());
 		         
-		return userRepository.save(user);
+		return userRepository.save(user)  ;
 	}
 	
 	
