@@ -20,48 +20,45 @@ import com.librarysystem.security.filter.JwtFilter;
 @EnableWebSecurity
 @EnableMethodSecurity // Enable @PreAuthorize, @PostAuthorize etc.
 public class SecurityConfig {
-	
+
 	@Autowired
-    private JwtFilter jwtFilter;
+	private JwtFilter jwtFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-            .authorizeHttpRequests()
-             
-            //  Public endpoints
-            .requestMatchers(
-                "/api/user/signup",
-                "/api/user/login",
-                "/api/user/forgot-password",
-                "/api/user/reset-password"
-            ).permitAll()
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.csrf().disable().authorizeHttpRequests()
 
-            //Admin protected endpoints
-            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+				// Public endpoints
+				.requestMatchers("/api/user/signup", "/api/user/verify-otp", "/api/user/login", "/api/user/forgot-password",
+						"/api/user/reset-password",
+						// Swagger ke URLs
+						"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html","/api/user/profile")
+				.permitAll()
 
-            // Authenticated user endpoints
-            .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+				// Admin protected endpoints
+				.requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-            // Any other request
-            .anyRequest().authenticated()
+				// Authenticated user endpoints
+				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
 
-            .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+				// Any other request
+				.anyRequest().authenticated()
 
-        // Add JWT filter
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+				.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        return http.build();
-    }
+		// Add JWT filter
+		http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+		return http.build();
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+		return config.getAuthenticationManager();
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 }

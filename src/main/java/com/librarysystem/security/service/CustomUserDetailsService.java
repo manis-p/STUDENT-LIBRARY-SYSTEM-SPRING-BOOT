@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.librarysystem.model.User;
 import com.librarysystem.repository.UserRepository;
+
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -18,6 +19,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+		if (user.isDeleted()) {
+			throw new RuntimeException("Your profile is deleted. Please register again.");
+		}
 		return new CustomUserDetails(user);
 	}
 

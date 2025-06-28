@@ -31,7 +31,7 @@ public class UserService {
 	@Autowired
 	private StroageOtp stroageOtp;
 
-	// Send OTP to email
+	// Reset password via OTP
 	public void sendOtpForReset(ForgotPasswordRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new RuntimeException("User not found with email: " + request.getEmail()));
@@ -46,10 +46,9 @@ public class UserService {
 
 		String resetLink = "http://localhost:8080/reset-password?token=" + token;
 
-		emailService.sendOtpEmail(user.getEmail(), user.getName(), otp, resetLink);
+		emailService.sendOtpEmail(user.getEmail(), user.getName(), otp, resetLink, null);
 	}
 
-	// Reset password via OTP
 	public void resetPassword(ResetPasswordRequest request, String token) {
 		OtpDetails otpData = stroageOtp.getOtpDetails(request.getEmail());
 
@@ -100,6 +99,33 @@ public class UserService {
 		Random random = new Random();
 		int otp = 100000 + random.nextInt(900000);
 		return String.valueOf(otp); // Convert int to string
+	}
+
+	// this for send the Otp for ogin
+	public void sendOtpForLogin(String email) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+		String otp = generateOtp();
+		stroageOtp.storeOtp(user.getEmail(), otp);
+
+		emailService.sendOtpEmail(user.getEmail(), user.getName(), otp, null, "LOGIN");
+	}
+
+	public boolean verifyLoginOtp(String email, String otp) {
+		OtpDetails otpDetails = stroageOtp.getOtpDetails(email);
+
+		if (otpDetails == null || !otpDetails.getOtp().equals(otp)) {
+			return false;
+		}
+
+		if (System.currentTimeMillis() > otpDetails.getTimestamp() + 5 * 60 * 1000) {
+			stroageOtp.removeOtp(email);
+			return false;
+		}
+
+		stroageOtp.removeOtp(email);
+		return true;
 	}
 
 }

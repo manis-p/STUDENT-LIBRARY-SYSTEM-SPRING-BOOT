@@ -36,12 +36,83 @@ public class User {
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
 	private String resetToken;
-
 	private LocalDateTime tokenExpiry;
+	private boolean isDeleted = false;
+	@Column(name = "last_login")
+	private LocalDateTime lastLogin;
+	private String lastLoginIp;
+	private String lastLoginDevice;
 
-	
+	public User(Long id, String name, String email, String password, String phone, Role role, LocalDateTime createdAt,
+			LocalDateTime updatedAt, String resetToken, LocalDateTime tokenExpiry, boolean isDeleted,
+			LocalDateTime lastLogin, String lastLoginIp, String lastLoginDevice) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.phone = phone;
+		this.role = role;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+		this.resetToken = resetToken;
+		this.tokenExpiry = tokenExpiry;
+		this.isDeleted = isDeleted;
+		this.lastLogin = lastLogin;
+		this.lastLoginIp = lastLoginIp;
+		this.lastLoginDevice = lastLoginDevice;
+	}
+
+	public LocalDateTime getLastLogin() {
+		return lastLogin;
+	}
+
+	public void setLastLogin(LocalDateTime lastLogin) {
+		this.lastLogin = lastLogin;
+	}
+
+	public String getLastLoginIp() {
+		return lastLoginIp;
+	}
+
+	public void setLastLoginIp(String lastLoginIp) {
+		this.lastLoginIp = lastLoginIp;
+	}
+
+	public String getLastLoginDevice() {
+		return lastLoginDevice;
+	}
+
+	public void setLastLoginDevice(String lastLoginDevice) {
+		this.lastLoginDevice = lastLoginDevice;
+	}
+
 	public String getResetToken() {
 		return resetToken;
+	}
+
+	public User(Long id, String name, String email, String password, String phone, Role role, LocalDateTime createdAt,
+			LocalDateTime updatedAt, String resetToken, LocalDateTime tokenExpiry, boolean isDeleted) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.phone = phone;
+		this.role = role;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+		this.resetToken = resetToken;
+		this.tokenExpiry = tokenExpiry;
+		this.isDeleted = isDeleted;
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
 	}
 
 	public void setResetToken(String resetToken) {
@@ -55,8 +126,6 @@ public class User {
 	public void setTokenExpiry(LocalDateTime tokenExpiry) {
 		this.tokenExpiry = tokenExpiry;
 	}
-
-	
 
 	public User() {
 
@@ -143,7 +212,7 @@ public class User {
 	public String toString() {
 		return "User [id=" + id + ", name=" + name + ", email=" + email + ", password=" + password + ", phone=" + phone
 				+ ", role=" + role + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", resetToken="
-				+ resetToken + ", tokenExpiry=" + tokenExpiry + "]";
+				+ resetToken + ", tokenExpiry=" + tokenExpiry + ", isDeleted=" + isDeleted + "]";
 	}
 
 }
