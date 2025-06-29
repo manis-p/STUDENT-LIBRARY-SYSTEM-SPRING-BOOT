@@ -1,54 +1,185 @@
-"Student Library System is a web application that provides core features of library management. It includes user registration, login, profile management, password reset (via OTP and email link), and implements secure authentication and authorization using Spring Security and JWT."
-Features
-User Signup with validation
+# 📚 Student Library System
 
-User Login with JWT-based authentication
+**Student Library System** is a full-featured web application that handles user authentication, profile management, and secure access using **Spring Security with JWT** and **2-Factor Authentication (2FA)** via email OTP. It supports **multi-device login management**, **refresh token handling**, and **secure logout with blacklist-based token invalidation**.
 
-View and Update User Profile
+---
 
-Password Change using old password
+## ✅ Features
 
-Forgot Password feature with Email OTP and Reset Link
+* 🔐 **User Signup**
+* 🔐 **Login with 2FA (OTP via Email) + Spring Security JWT**
+* 👤 **Get User Profile**
+* ✏️ **Update Profile**
+* ❌ **Soft Delete Profile** – Marks user as deleted with a message if trying to login again
+* 🔁 **Change Password**
 
-Password Reset via OTP and token validation
+  * Using Old Password
+  * Using Email OTP
+* 📧 **Forgot Password**
 
-Role-based Authorization (User/Admin roles)
+  * Sends Email OTP and Reset Link via JavaMailSender
+* 🔄 **Access + Refresh Token Authentication**
 
-Secure API endpoints with Spring Security and JWT
-Technology Stack & Tools
-Java 17
+  * Refresh token used to generate new access token
+  * Blacklist active access token on logout
+  * Tokens auto-removed from DB after expiry (for memory optimization)
+* 📱 **Device-Level Session Management**
 
-Spring Boot (REST APIs)
+  * Single-device logout
+  * Specific device logout
+* ⏳ **Token Expiry Tracking + Auto Cleanup**
 
-Spring Security with JWT (JSON Web Token)
+---
 
-Maven (Build tool)
+## 🔗 API Endpoints
 
-Spring Data JPA (Database interaction)
+| Method | Endpoint         | Description                                 |
+| ------ | ---------------- | ------------------------------------------- |
+| POST   | /signup          | User registration                           |
+| POST   | /login           | User login with JWT + 2FA                   |
+| GET    | /profile         | Get user profile (secured)                  |
+| PUT    | /update          | Update user profile                         |
+| DELETE | /delete          | Soft delete user profile                    |
+| POST   | /verify-otp      | 2FA OTP verification                        |
+| POST   | /logout          | Logout from current device                  |
+| POST   | /logout-device   | Logout from specific device                 |
+| POST   | /refresh         | Generate new access token via refresh token |
+| POST   | /change-password | Change password using old password          |
+| POST   | /forgot-password | Send OTP & reset link to email              |
+| POST   | /reset-password  | Reset password using email and token        |
 
-MySQL (or any preferred relational DB)
+---
 
-Email sending with JavaMailSender
+## 🧰 Package Structure
 
-Lombok (optional, for boilerplate code reduction)
+Main base package: com.librarysystem
 
-IDE: VS Code / IntelliJ IDEA
+| Package Name    | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| config          | Spring Security configuration (JWT setup, filters, auth rules)   |
+| controller      | REST Controllers: AuthController, SessionController, UserHandler |
+| dto             | DTOs for request & response data                                 |
+| email           | Email-related logic (sending OTP, reset links)                   |
+| exception       | Custom exception handling (global and local)                     |
+| model           | Entity classes (e.g., User)                                      |
+| otp             | OTP generation, validation, and expiry                           |
+| repository      | Spring Data JPA repositories (DB interaction)                    |
+| filter          | JWT filter – intercepts and validates every request              |
+| securityservice | Spring Security logic (UserDetailsService, token handling)       |
+| service         | Business logic: signup, login, password reset/change             |
+| util            | Utility classes (JWT utility, token generation, email helper)    |
 
-Project Structure & Package Explanation
-Package	Description
-com.librarysystem.config	Spring Security configurations — Authentication & Authorization setup
-com.librarysystem.otp	OTP generation, storage, and validation logic
-com.librarysystem.security.filter	JWT filter that intercepts requests to validate tokens and set security context
-com.librarysystem.util	Utility classes — JWT token generation and validation helpers
-com.librarysystem.service	Business logic — signup, login, password reset/change, OTP handling, email sending
-com.librarysystem.controller	REST Controllers to handle HTTP requests for authentication, user profile, password reset etc.
-com.librarysystem.email	Email services for sending OTP and password reset links
-com.librarysystem.model	JPA Entity classes mapping database tables (User, Roles, etc.)
-com.librarysystem.repository	Spring Data repositories for database CRUD operations
-com.librarysystem.dto	Data Transfer Objects for request and response payloads
+---
 
-THIS IS MY APPLICATION.PROPERTIES FILE
+## 💻 Tech Stack
+
+| Layer                | Technology                                                |
+| -------------------- | --------------------------------------------------------- |
+| 👨‍💻 Language          | Java 17                                                   |
+| ⚙️ Backend Framework | Spring Boot (REST APIs)                                   |
+| 🔐 Security          | Spring Security + JWT + 2FA OTP                           |
+| 🗃️ Database          | MySQL + Spring Data JPA                                   |
+| ✉️ Email Services    | JavaMailSender (Gmail SMTP)                               |
+| 🔄 Token Handling    | Access Token + Refresh Token (Blacklist + Expiry Cleanup) |
+| 📬 API Documentation | Swagger UI (OpenAPI 3)                                    |
+| 📬 API Testing       | Postman                                                   |
+| 🧠 Build Tool        | Maven                                                     |
+| ✏️ Code Reduction    | Lombok (optional)                                         |
+| 💻 IDEs              | IntelliJ IDEA / Eclipse / VS Code                         |
+
+---
+
+## 🔐 Security & Token Flow
+
+* **JWT** is used for securing endpoints.
+* **2FA** is implemented using email OTP during login.
+* **Access Token + Refresh Token**:
+
+  * Refresh token helps generate new access token.
+  * Both tokens are stored and cleaned up after expiry.
+  * On logout, access token is blacklisted, refresh token is removed.
+* **Soft Delete Logic**:
+
+  * When a user is deleted, login shows a friendly error message.
+* **Multi-device support**:
+
+  * Each login gets a unique token.
+  * Logout from a specific device or all devices is supported.
+
+---
+
+## 🦪 How to Run
+
+```bash
+# Step 1: Build the project
+mvn clean install
+
+# Step 2: Run the application
+mvn spring-boot:run
+```
+
+➡️ App will run at: `http://localhost:8080`
+
+---
+
+## 🔍 Swagger UI Preview
+
+The project includes **integrated Swagger UI** for easy API exploration and testing.
+
+### 1. 🔐 Login Endpoint (2FA OTP)
+
+After submitting email/password, OTP is sent to your email.
+This ensures 2-Factor Authentication during login.
+
+---
+
+### 2. ✅ Verify OTP & Get JWT Tokens
+
+On submitting correct OTP, system returns:
+
+* 🔑 AccessToken
+* 🔁 RefreshToken
+
+These tokens are used to access secure endpoints and manage sessions.
+
+---
+
+### 3. 📋 API Documentation Overview
+
+The Swagger UI shows:
+
+* Grouped endpoints (AuthController, SessionController, etc.)
+* Proper HTTP methods (GET, POST, PUT, DELETE)
+* Real-time testing with input fields
+
+---
+
+### 🔐 Token Authorization on Swagger
+
+Once you have the accessToken, click on **"Authorize"** in top-right of Swagger and enter:
+
+```bash
+Bearer your_access_token_here
+```
+
+Now you can test secured APIs like /profile, /update, /logout, etc.
+
+---
+
+## 👨‍💼 Developer Info
+
+* 👤 Name: Manish Jha
+* 📧 Email: [jham7340@gmail.com]
+* 🌍 Location: India
+
+---
+
+## ⚙️ `application.properties` Configuration
+
+```properties
+# --------------------------------------
 # Spring Datasource Configuration
+# --------------------------------------
 spring.datasource.name=student
 spring.application.name=StudentLibrarySystem
 spring.datasource.url=jdbc:mysql://localhost:3306/studentlibrary
@@ -56,53 +187,40 @@ spring.datasource.username=root
 spring.datasource.password=7493831815Mj
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
-# JPA/Hibernate Configuration
+# --------------------------------------
+# JPA / Hibernate Configuration
+# --------------------------------------
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.use_sql_comments=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 spring.jpa.hibernate.ddl-auto=update
-
-
-# Enable pretty print of the SQL queries
 spring.jpa.properties.hibernate.format_sql=true
+spring.profiles.active=default
 
-
+# --------------------------------------
+# Email Configuration (JavaMailSender)
+# -------------------------------------
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=jham7340@gmail.com
-spring.mail.password=jwgurmwzdummdbfq
+spring.mail.username=jmak7340@gmail.com
+spring.mail.password=jwgurmwzdummd
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 spring.mail.properties.mail.smtp.connectiontimeout=5000
 spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
+
+# --------------------------------------
+# Mail Debug Logs
+# --------------------------------------
 logging.level.org.springframework.mail=DEBUG
 logging.level.org.apache.commons.mail=DEBUG
-Build and run the project using Maven:
-mvn clean install
-mvn spring-boot:run
-Application will start at http://localhost:8080
-API Endpoints
-POST /api/user/signup - Register new user
+```
 
-POST /api/user/login - Login and get JWT token
 
-GET /api/user/profile - Get logged-in user profile (secured)
 
-PUT /api/user/update-profile - Update user profile (secured)
+🚀 More features like **book module**, **admin dashboard**, and **borrowing history** coming soon!
 
-POST /api/user/change-password - Change password (secured)
 
-POST /api/user/forgot-password - Send OTP and reset link to email
 
-POST /api/user/reset-password?token=xyz - Reset password with OTP and token
-NOTE:
-JWT tokens are used to secure APIs and must be passed in Authorization header as Bearer <token>.
 
-Password reset tokens expire in 5 minutes for security.
-
-OTPs are stored temporarily in memory and validated with expiry logic.
-
-Spring Security roles manage access to sensitive endpoints.
-
-** This project is under active development. More features will be added soon**
