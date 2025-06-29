@@ -123,6 +123,22 @@ mvn spring-boot:run
 ---
 
 ## 🔍 Swagger UI Preview
+### 1. 🔐 Login Endpoint (2FA OTP)
+
+![Login API - OTP Flow](assets/swagger-login.jpg)
+
+---
+
+### 2. ✅ Verify OTP & Get JWT Tokens
+
+![Verify OTP - Token Response](assets/verify.jpg)
+
+---
+
+### 3. 📋 API Documentation Overview
+
+![All Endpoints - Swagger UI](assets/swagger-all-endpoints.jpg)
+
 
 The project includes **integrated Swagger UI** for easy API exploration and testing.
 
