@@ -21,7 +21,7 @@
 * 🔄 **Access + Refresh Token Authentication**
 
   * Refresh token used to generate new access token
-  * Blacklist active access token on logout
+  * Blacklist active access token on logout.
   * Tokens auto-removed from DB after expiry (for memory optimization)
 * 📱 **Device-Level Session Management**
 
