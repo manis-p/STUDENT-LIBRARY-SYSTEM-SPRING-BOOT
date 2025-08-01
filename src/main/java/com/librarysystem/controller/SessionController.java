@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.librarysystem.dto.AuthRequest;
+import com.librarysystem.exception.UserNotFoundException;
+import com.librarysystem.exception.handleInvalidRequest;
 import com.librarysystem.model.ActiveAccessToken;
 import com.librarysystem.model.Role;
 import com.librarysystem.model.User;
@@ -32,103 +33,115 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/api/user")
 public class SessionController {
 
-	@Autowired
-	private RefreshTokenService refreshTokenService;
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
-	@Autowired
-	private UserRepository userRepository;
-	@Autowired
-	private JwtUtil jwtUtil;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
 
-	@Autowired
-	private ActiveAccessTokenRepository activeAccessTokenRepository;
+    @Autowired
+    private ActiveAccessTokenRepository activeAccessTokenRepository;
 
-	@Autowired
-	private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
-	@Autowired
-	private BlacklistedTokenService blacklistedTokenService;
+    @Autowired
+    private BlacklistedTokenService blacklistedTokenService;
 
-	// Logout current device (invalidate current refresh token)
-	@PostMapping("/logout")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-	public ResponseEntity<?> logoutCurrentDevice(@RequestBody Map<String, String> request,
-			HttpServletRequest httpRequest) {
-		try {
-			// 1. Get userId from request
-			Long userId = Long.parseLong(request.get("userId"));
-			User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    // Logout current device (invalidate current refresh token)
+    @PostMapping("/logout")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> logoutCurrentDevice(@RequestBody Map<String, String> request,
+            HttpServletRequest httpRequest) {
 
-			// 2. Delete refresh token
-			String refreshToken = request.get("refreshToken");
-			refreshTokenService.deleteByToken(refreshToken);
+        String userIdStr = request.get("userId");
+        if (userIdStr == null || userIdStr.isEmpty()) {
+            throw new handleInvalidRequest("Missing 'userId' in request.");
+        }
 
-			// 3. Blacklist current access token
-			String accessToken = jwtUtil.getJwtFromRequest(httpRequest);
-			Instant expiry = jwtUtil.getExpiryFromToken(accessToken);
-			blacklistedTokenService.blacklistToken(accessToken, expiry);
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new handleInvalidRequest("Invalid userId format.");
+        }
 
-			// 4. Delete current access token from active tokens (not all)
-			ActiveAccessToken currentToken = activeAccessTokenRepository.findByTokenAndUser(accessToken, user);
-			if (currentToken != null) {
-				activeAccessTokenRepository.delete(currentToken);
-			}
+        // 1. Get userId from request
+        userId = Long.parseLong(request.get("userIdStr"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
-			return ResponseEntity.ok("Logged out from current device.");
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
+        // 2. Delete refresh token
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new handleInvalidRequest("Missing refreshToken in request.");
+        }
+        refreshTokenService.deleteByToken(refreshToken);
 
-	}
+        // 3. Blacklist current access token
+        String accessToken = jwtUtil.getJwtFromRequest(httpRequest);
+        Instant expiry = jwtUtil.getExpiryFromToken(accessToken);
+        blacklistedTokenService.blacklistToken(accessToken, expiry);
 
-	// Logout from all devices
-	@PostMapping("/logoutAllDevices")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-	public ResponseEntity<?> logoutAllDevices(@RequestBody Map<String, String> request,
-			HttpServletRequest httpRequest) {
-		try {
-			Long userId = Long.parseLong(request.get("userId"));
+        // 4. Delete current access token from active tokens (not all)
+        ActiveAccessToken currentToken = activeAccessTokenRepository.findByTokenAndUser(accessToken, user);
+        if (currentToken != null) {
+            activeAccessTokenRepository.delete(currentToken);
+        }
 
-			// 1. Fetch the user
-			User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok("Logged out from current device.");
 
-			// 2. Delete all refresh tokens of this user
-			refreshTokenService.deleteByUser(user);
+    }
 
-			// 3. Get all active access tokens of this user
-			List<ActiveAccessToken> activeTokens = activeAccessTokenRepository.findByUser(user);
+    // Logout from all devices
+    @PostMapping("/logoutAllDevices")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> logoutAllDevices(@RequestBody Map<String, String> request,
+            HttpServletRequest httpRequest) {
+        try {
+            Long userId = Long.parseLong(request.get("userId"));
 
-			// 4. Blacklist all tokens
-			for (ActiveAccessToken token : activeTokens) {
-				blacklistedTokenService.blacklistToken(token.getToken(), token.getExpiryDate());
-			}
+            // 1. Fetch the user
+            User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
-			// 5. delete from ActiveAccessToken table after blacklisting
-			activeAccessTokenRepository.deleteAll(activeTokens);
+            // 2. Delete all refresh tokens of this user
+            refreshTokenService.deleteByUser(user);
 
-			return ResponseEntity.ok("Logged out from all devices successfully.");
+            // 3. Get all active access tokens of this user
+            List<ActiveAccessToken> activeTokens = activeAccessTokenRepository.findByUser(user);
 
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
+            // 4. Blacklist all tokens
+            for (ActiveAccessToken token : activeTokens) {
+                blacklistedTokenService.blacklistToken(token.getToken(), token.getExpiryDate());
+            }
 
-	@PostMapping("/refresh")
-	public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
-		String refreshToken = request.get("refreshToken");
+            // 5. delete from ActiveAccessToken table after blacklisting
+            activeAccessTokenRepository.deleteAll(activeTokens);
 
-		if (!refreshTokenService.isValid(refreshToken)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
-		}
+            return ResponseEntity.ok("Logged out from all devices successfully.");
 
-		String userEmail = refreshTokenService.getUserEmailFromToken(refreshToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 
-		UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
-		CustomUserDetails customDetails = (CustomUserDetails) userDetails;
-		Role userRole = customDetails.getUser().getRole();
-		final String newAccessToken = jwtUtil.generateToken(userEmail, userRole);
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
 
-		return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
-	}
+        if (!refreshTokenService.isValid(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+        }
+
+        String userEmail = refreshTokenService.getUserEmailFromToken(refreshToken);
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
+        CustomUserDetails customDetails = (CustomUserDetails) userDetails;
+        Role userRole = customDetails.getUser().getRole();
+        final String newAccessToken = jwtUtil.generateToken(userEmail, userRole);
+
+        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+    }
 
 }

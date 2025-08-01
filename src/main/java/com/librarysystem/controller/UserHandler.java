@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,10 @@ import com.librarysystem.dto.OtpRequest;
 import com.librarysystem.dto.SignupRequestDto;
 import com.librarysystem.dto.UpdateProfileRequestDto;
 import com.librarysystem.email.UserService;
+import com.librarysystem.exception.DatabaseOperationException;
+import com.librarysystem.exception.InvalidUserDetailsTypeException;
+import com.librarysystem.exception.TokenGenerationException;
+import com.librarysystem.exception.UserNotFoundException;
 import com.librarysystem.model.ActiveAccessToken;
 import com.librarysystem.model.RefreshToken;
 import com.librarysystem.model.Role;
@@ -39,159 +44,149 @@ import com.librarysystem.service.UserServiceImpl;
 import com.librarysystem.util.JwtUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 @RestController
 @RequestMapping("/api/user")
+@Validated
 public class UserHandler {
-	@Autowired
-	public UserServiceImpl userServiceImpl;
-	@Autowired
-	private JwtUtil jwtUtil;
-	@Autowired
-	private AuthenticationManager authenticationManager;
-	@Autowired
-	private CustomUserDetailsService customUserDetailsService;
 
-	@Autowired
-	private ActiveAccessTokenRepository activeAccessTokenRepository;
+    @Autowired
+    public UserServiceImpl userServiceImpl;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
-	@Autowired
-	private RefreshTokenService refreshTokenService;
+    @Autowired
+    private ActiveAccessTokenRepository activeAccessTokenRepository;
 
-	@Autowired
-	private UserRepository userRepository;
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
-	@Autowired
-	private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-	@PostMapping("/signup")
-	public ResponseEntity<?> userSignUp(@RequestBody SignupRequestDto signupRequestDto) {
-		System.out.println("User signup API hit");
-		try {
-			User savedUser = userServiceImpl.registerUser(signupRequestDto);
-			System.out.println("Received request: " + signupRequestDto);
-			return ResponseEntity.ok(savedUser);
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
+    @Autowired
+    private UserService userService;
 
-	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
-		try {
+    @PostMapping("/signup")
+    public ResponseEntity<?> userSignUp(@Valid @RequestBody SignupRequestDto signupRequestDto) {
 
-			// Check if user exists and is not deleted
-			User user = userRepository.findByEmailAndIsDeletedFalse(authRequest.getEmail())
-					.orElseThrow(() -> new RuntimeException("Your profile is deleted. Please register again."));
+        User savedUser = userServiceImpl.registerUser(signupRequestDto);
+        System.out.println("Received request: " + signupRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);    
 
-			// Authenticate credentials
-			authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
 
-			// Send OTP
-			userService.sendOtpForLogin(authRequest.getEmail());
 
-			return ResponseEntity.ok("OTP sent to your email");
+    }
 
-		} catch (BadCredentialsException e) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
 
-		} catch (RuntimeException e) {
-			if (e.getMessage().contains("deleted")) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-						.body("Your profile is deleted. Please register again.");
-			}
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        // Check if user exists and is not deleted
+        User user = userRepository.findByEmailAndIsDeletedFalse(authRequest.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("user not found."));
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Something went wrong: " + e.getMessage());
-		}
-	}
+        // Authenticate credentials
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
 
-	@GetMapping("/profile")
-	//@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-	public ResponseEntity<?> getProfile(@RequestParam String email) {
-		try {
-			User user = userServiceImpl.getUserProfile(email);
-			return ResponseEntity.ok(user);
-		} catch (RuntimeException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
-		}
-	}
+        userService.sendOtpForLogin(authRequest.getEmail());
 
-	@PutMapping("/update")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-	public ResponseEntity<?> updateUser(@RequestParam String email, @RequestBody UpdateProfileRequestDto dto) {
-		try {
-			User user = userServiceImpl.updateUserProfile(email, dto);
-			return ResponseEntity.ok(user);
-		} catch (RuntimeException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
-		}
-	}
+        return ResponseEntity.ok("OTP sent to your email");
 
-	// user delete
-	@DeleteMapping("/delete/{id}")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-	public ResponseEntity<?> deleteUser(@PathVariable("id") Long userId) {
+    }
 
-		try {
-			userServiceImpl.deleteUser(userId);
-			return ResponseEntity.ok("user deleted sucesfuy");
-		} catch (RuntimeException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
+    @GetMapping("/profile")
+    // @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> getProfile(@RequestParam @NotBlank @Email String email) {
 
-		}
+        User user = userServiceImpl.getUserProfile(email);
+        return ResponseEntity.ok(user);
+    }
 
-	}
+    @PutMapping("/update")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> updateUser(@Valid @RequestParam String email, @RequestBody UpdateProfileRequestDto dto) {
 
-	@PostMapping("/verify-otp")
-	public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest otpRequest, HttpServletRequest request) {
-		try {
+        User user = userServiceImpl.updateUserProfile(email, dto);
+        return ResponseEntity.ok(user);
+    }
 
-			String ipAddress = request.getRemoteAddr();
-			String userAgent = request.getHeader("User-Agent");
-			// Validate OTP
-			boolean isValid = userService.verifyLoginOtp(otpRequest.getEmail(), otpRequest.getOtp());
+    // user delete
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable("id") @Min(1) Long userId) {
 
-			if (!isValid) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired OTP");
-			}
+        userServiceImpl.deleteUser(userId);
+        return ResponseEntity.ok("user deleted sucesfuy");
 
-			// Load user details
-			UserDetails userDetails = customUserDetailsService.loadUserByUsername(otpRequest.getEmail());
-			CustomUserDetails customDetails = (CustomUserDetails) userDetails;
-			User user = customDetails.getUser();
-			Role userRole = user.getRole();
+    }
 
-			// Generate JWT and refresh token
-			String jwt = jwtUtil.generateToken(userDetails.getUsername(), userRole);
-			RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest otpRequest, HttpServletRequest request) {
 
-			// Save active token
-			ActiveAccessToken activeToken = new ActiveAccessToken();
-			activeToken.setUser(user);
-			activeToken.setToken(jwt);
-			activeToken.setExpiryDate(jwtUtil.getExpiryFromToken(jwt));
-			activeAccessTokenRepository.save(activeToken);
+        String ipAddress = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+        // Validate OTP
+        userService.verifyLoginOtp(otpRequest.getEmail(), otpRequest.getOtp());
 
-			// Update login time
-			user.setLastLogin(LocalDateTime.now());
-			user.setLastLoginIp(ipAddress);
-			user.setLastLoginDevice(userAgent);
-			userRepository.save(user);
+        // Load user details
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(otpRequest.getEmail());
+        if (!(userDetails instanceof CustomUserDetails)) {
+            throw new InvalidUserDetailsTypeException("UserDetails is not of type CustomUserDetails.");
+        }
+        CustomUserDetails customDetails = (CustomUserDetails) userDetails;
+        User user = customDetails.getUser();
+        Role userRole = user.getRole();
 
-			// Return tokens
-			AuthResponseWithRefreshToken response = new AuthResponseWithRefreshToken(jwt, refreshToken.getToken());
-			return ResponseEntity.ok(response);
+        // Generate JWT and refresh token
+        String jwt;
+        try {
+            jwt = jwtUtil.generateToken(userDetails.getUsername(), userRole);
+        } catch (Exception e) {
+            throw new TokenGenerationException("Unable to generate JWT token");
+        }
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body("Something went wrong: " + e.getMessage());
-		}
-	}
+        // Save active token
+        try {
+            ActiveAccessToken activeToken = new ActiveAccessToken();
+            activeToken.setUser(user);
+            activeToken.setToken(jwt);
+            activeToken.setExpiryDate(jwtUtil.getExpiryFromToken(jwt));
+
+            activeAccessTokenRepository.save(activeToken);
+
+        } catch (Exception e) {
+            throw new DatabaseOperationException("Failed to save active access token");
+        }
+
+        // Update login time
+        try {
+            user.setLastLogin(LocalDateTime.now());
+            user.setLastLoginIp(ipAddress);
+            user.setLastLoginDevice(userAgent);
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new DatabaseOperationException("Failed to save Update login time ");
+
+        }
+
+        // Return tokens
+        AuthResponseWithRefreshToken response = new AuthResponseWithRefreshToken(jwt, refreshToken.getToken());
+        return ResponseEntity.ok(response);
+
+    }
 
 }

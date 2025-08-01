@@ -1,5 +1,4 @@
 package com.librarysystem.config;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +31,7 @@ public class SecurityConfig {
 				.requestMatchers("/api/user/signup", "/api/user/verify-otp", "/api/user/login", "/api/user/forgot-password",
 						"/api/user/reset-password",
 						// Swagger ke URLs
-						"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html","/api/user/profile")
+						"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html" )
 				.permitAll()
 
 				// Admin protected endpoints

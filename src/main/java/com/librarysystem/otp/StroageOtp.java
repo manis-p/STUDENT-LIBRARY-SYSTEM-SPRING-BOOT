@@ -4,10 +4,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
+
 @Component
 public class StroageOtp {
-	
-	private Map<String, OtpDetails> otpCache = new ConcurrentHashMap<>();
+
+    private Map<String, OtpDetails> otpCache = new ConcurrentHashMap<>();
 
     public void storeOtp(String email, String otp) {
         OtpDetails details = new OtpDetails(otp, System.currentTimeMillis());
@@ -23,6 +24,7 @@ public class StroageOtp {
     }
 
     public static class OtpDetails {
+
         private String otp;
         private long timestamp;
 

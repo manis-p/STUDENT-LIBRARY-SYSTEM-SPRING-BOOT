@@ -1,14 +1,25 @@
 package com.librarysystem.dto;
 
-public class UpdateProfileRequestDto {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
+public class UpdateProfileRequestDto {
+	@NotBlank(message = "Name is required")
+	@Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
 	private String name;
-    private String phone;
-    private String password;
-    
-    public UpdateProfileRequestDto() {
-    	
-    }
+	@NotBlank(message = "Phone number is required")
+	@Pattern(regexp = "^[6-9]\\d{9}$", message = "Phone number must be a valid 10-digit Indian number")
+	private String phone;
+	@NotBlank(message = "Password is required")
+	@Size(min = 6, max = 20, message = "Password must be between 6 and 20 characters")
+	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,20}$", 
+			 message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")	
+	private String password;
+
+	public UpdateProfileRequestDto() {
+
+	}
 
 	public UpdateProfileRequestDto(String name, String phone, String password) {
 		super();
@@ -45,7 +56,5 @@ public class UpdateProfileRequestDto {
 	public String toString() {
 		return "UpdateProfileRequestDto [name=" + name + ", phone=" + phone + ", password=" + password + "]";
 	}
-    
-    
-	
+
 }

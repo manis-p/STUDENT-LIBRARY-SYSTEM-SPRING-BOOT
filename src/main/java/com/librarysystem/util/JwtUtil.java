@@ -54,7 +54,7 @@ public class JwtUtil {
 
 	public Instant getExpiryFromToken(String token) {
 		Date expirationDate = extractAllClaims(token).getExpiration();
-		return expirationDate.toInstant(); // convert java.util.Date to java.time.Instant
+		return expirationDate.toInstant(); 
 	}
 
 	public String getJwtFromRequest(HttpServletRequest request) {
