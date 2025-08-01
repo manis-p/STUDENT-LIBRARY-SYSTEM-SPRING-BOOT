@@ -12,6 +12,8 @@
 * ✏️ **Update Profile**
 * ❌ **Soft Delete Profile** – Marks user as deleted with a message if trying to login again
 * 🔁 **Change Password**
+🧪 Unit Testing with Mockito & JUnit
+🛡️ Custom Validation + Exception Handling
 
   * Using Old Password
   * Using Email OTP
@@ -29,7 +31,51 @@
   * Specific device logout
 * ⏳ **Token Expiry Tracking + Auto Cleanup**
 
+ ## 🛡️ Validation, Exception Handling & Unit Testing
+
+### ✅ Validation
+
+User inputs are strictly validated using annotations like:
+
+- `@NotBlank`, `@Email`, `@Pattern`, `@Size`, etc.
+- Defined inside `DTO` classes.
+
+✅ Ensures clean and valid data before hitting service layer.
+
 ---
+
+### ❗ Exception Handling
+
+#### 📦 Custom Exceptions (`exception` package):
+- `UserNotFoundException`
+- `OtpExpiredException`
+- `InvalidTokenException`
+- `AlreadyDeletedException`
+- And more...
+
+#### 🌐 Global Exception Handler:
+- Centralized handling via `@ControllerAdvice`
+- Handles:
+  - Field validation errors
+  - Custom exceptions
+  - Unexpected server errors
+- Sends clean error responses to frontend.
+
+---
+
+### 🧪 Unit Testing
+
+Service layer tested using:
+
+- 🔍 `JUnit 5` + `Mockito`
+- ✅ Tests located in `unit` package
+
+Benefits:
+- Ensures business logic correctness
+- Makes system reliable & maintainable
+
+---
+
 
 ## 🔗 API Endpoints
 
