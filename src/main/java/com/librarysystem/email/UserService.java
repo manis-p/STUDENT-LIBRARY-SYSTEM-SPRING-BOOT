@@ -30,7 +30,7 @@ public class UserService {
 	private UserRepository userRepository;
 
 	@Autowired
-    public EmailService emailService;
+	public EmailService emailService;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -38,15 +38,17 @@ public class UserService {
 	@Autowired
 	private StroageOtp stroageOtp;
 
-
 	// Reset password via OTP
-	public void sendOtpForReset(ForgotPasswordRequest request) {
-		User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-				() -> new UserNotFoundException("No user registered with this email: " + request.getEmail()));
+	private void generateAndSendReset(User user, boolean withOtp) {
+		String otp = null;
 
-		String otp = generateOtp();
-		stroageOtp.storeOtp(user.getEmail(), otp); // storing in StroageOtp class
-
+		// OTP sirf tab generate hoga jab user request kare
+		if (withOtp) {
+			otp = generateOtp();
+			stroageOtp.storeOtp(user.getEmail(), otp);
+		}
+       System.out.println("Generated OTP: " + otp);
+		// Token hamesha save hoga (user/admin dono case me)
 		String token = UUID.randomUUID().toString();
 		user.setResetToken(token);
 		user.setTokenExpiry(LocalDateTime.now().plusMinutes(5));
@@ -55,10 +57,30 @@ public class UserService {
 		String resetLink = "http://localhost:8080/reset-password?token=" + token;
 
 		try {
-			emailService.sendOtpEmail(user.getEmail(), user.getName(), otp, resetLink, null);
+			emailService.sendOtpEmail(
+					user.getEmail(),
+					user.getName(),
+					otp, // agar OTP null hai → admin case me skip ho jayega
+					resetLink,
+					null);	 // purpose null hai kyunki dono case me same email format hai
 		} catch (Exception e) {
-			throw new EmailSendFailedException("Failed to send OTP email. Please try again.");
+			throw new EmailSendFailedException("Failed to send reset email. Please try again.");
 		}
+	}
+
+	public void sendOtpForReset(ForgotPasswordRequest request) {
+		User user = userRepository.findByEmail(request.getEmail())// need to chnage this method for delete the user 
+				.orElseThrow(() -> new UserNotFoundException(
+						"No user registered with this email: " + request.getEmail()));
+
+		generateAndSendReset(user, true); // OTP + link
+	}
+
+	public void forceSendResetLink(Long userId) {
+		User user = userRepository.findById(userId) //need to chnage this method for delete the user
+				.orElseThrow(() -> new UserNotFoundException("User not found"));
+
+		generateAndSendReset(user, true); // 
 	}
 
 	// verify
@@ -75,7 +97,7 @@ public class UserService {
 			throw new OtpExpiredException("OTP expired");
 		}
 
-		User user = userRepository.findByEmail(request.getEmail())
+		User user = userRepository.findByEmail(request.getEmail())//need to chnage this method for delete the user
 				.orElseThrow(() -> new UserNotFoundException("User not found")); // yeha bhi thik karna hsi
 
 		if (!token.equals(user.getResetToken())) {
@@ -95,7 +117,7 @@ public class UserService {
 	}
 
 	// Change password via oldPassword
-	public User changePassword(ChangePasswordRequest changePasswordRequest) {
+	public User changePassword(ChangePasswordRequest changePasswordRequest) {//need to chnage this method for delete the user
 		User user = userRepository.findByEmail(changePasswordRequest.getEmail()).orElseThrow(
 				() -> new UserNotFoundException("User not found with email: " + changePasswordRequest.getEmail()));
 
@@ -108,7 +130,7 @@ public class UserService {
 	}
 
 	// Utility for OTP generation
-	//iska test nahi likha h
+	// iska test nahi likha h
 	public String generateOtp() {
 		Random random = new Random();
 		int otp = 100000 + random.nextInt(900000);
@@ -117,7 +139,7 @@ public class UserService {
 
 	// this for send the Otp for login
 	public void sendOtpForLogin(String email) {
-		User user = userRepository.findByEmail(email)
+		User user = userRepository.findByEmail(email)//need to chnage this method for delete the user
 				.orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
 		String otp = generateOtp();
@@ -134,7 +156,7 @@ public class UserService {
 		OtpDetails otpDetails = stroageOtp.getOtpDetails(user.getEmail());
 
 		if (otpDetails == null || !otpDetails.getOtp().equals(otp)) {
-			throw new InvalidOtpException("Invalid OTP"); 
+			throw new InvalidOtpException("Invalid OTP");
 		}
 
 		if (System.currentTimeMillis() > otpDetails.getTimestamp() + 5 * 60 * 1000) {

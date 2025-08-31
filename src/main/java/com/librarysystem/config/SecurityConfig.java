@@ -29,7 +29,7 @@ public class SecurityConfig {
 
 				// Public endpoints
 				.requestMatchers("/api/user/signup", "/api/user/verify-otp", "/api/user/login", "/api/user/forgot-password",
-						"/api/user/reset-password",
+						"/api/user/reset-password","/api/user/signup/admin",
 						// Swagger ke URLs
 						"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html" )
 				.permitAll()
@@ -39,6 +39,10 @@ public class SecurityConfig {
 
 				// Authenticated user endpoints
 				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+				.requestMatchers("/api/auth/**").hasAnyRole("USER", "ADMIN")
+				.requestMatchers("/api/session/**").hasAnyRole("USER", "ADMIN")
+				//.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+
 
 				// Any other request
 				.anyRequest().authenticated()

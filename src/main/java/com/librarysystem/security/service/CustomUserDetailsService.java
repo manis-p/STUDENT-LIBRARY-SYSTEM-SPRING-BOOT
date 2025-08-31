@@ -18,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String email)  {
-		User user = userRepository.findByEmail(email)
+		User user = userRepository.findByEmail(email)//need to chnage this method for delete the user
 				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 		if (user.isDeleted()) {

@@ -11,11 +11,6 @@ public class UpdateProfileRequestDto {
 	@NotBlank(message = "Phone number is required")
 	@Pattern(regexp = "^[6-9]\\d{9}$", message = "Phone number must be a valid 10-digit Indian number")
 	private String phone;
-	@NotBlank(message = "Password is required")
-	@Size(min = 6, max = 20, message = "Password must be between 6 and 20 characters")
-	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,20}$", 
-			 message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")	
-	private String password;
 
 	public UpdateProfileRequestDto() {
 
@@ -25,7 +20,7 @@ public class UpdateProfileRequestDto {
 		super();
 		this.name = name;
 		this.phone = phone;
-		this.password = password;
+
 	}
 
 	public String getName() {
@@ -44,17 +39,9 @@ public class UpdateProfileRequestDto {
 		this.phone = phone;
 	}
 
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
 	@Override
 	public String toString() {
-		return "UpdateProfileRequestDto [name=" + name + ", phone=" + phone + ", password=" + password + "]";
+		return "UpdateProfileRequestDto [name=" + name + ", phone=" + phone + "]";
 	}
 
 }

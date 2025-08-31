@@ -1,10 +1,10 @@
 package com.librarysystem.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,129 +12,54 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
 public class User {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment ID
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
 	private String name;
+
 	@Column(unique = true, nullable = false)
 	private String email;
+
 	private String password;
 	private String phone;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, name = "role")
 	private Role role;
-	@CreationTimestamp
+
+	@Column(updatable = false)
 	private LocalDateTime createdAt;
-	@UpdateTimestamp
+
 	private LocalDateTime updatedAt;
+
 	private String resetToken;
 	private LocalDateTime tokenExpiry;
+
 	private boolean isDeleted = false;
+
 	@Column(name = "last_login")
 	private LocalDateTime lastLogin;
+
 	private String lastLoginIp;
 	private String lastLoginDevice;
 
-	public User(Long id, String name, String email, String password, String phone, Role role, LocalDateTime createdAt,
-			LocalDateTime updatedAt, String resetToken, LocalDateTime tokenExpiry, boolean isDeleted,
-			LocalDateTime lastLogin, String lastLoginIp, String lastLoginDevice) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.email = email;
-		this.password = password;
-		this.phone = phone;
-		this.role = role;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.resetToken = resetToken;
-		this.tokenExpiry = tokenExpiry;
-		this.isDeleted = isDeleted;
-		this.lastLogin = lastLogin;
-		this.lastLoginIp = lastLoginIp;
-		this.lastLoginDevice = lastLoginDevice;
-	}
-
-	public LocalDateTime getLastLogin() {
-		return lastLogin;
-	}
-
-	public void setLastLogin(LocalDateTime lastLogin) {
-		this.lastLogin = lastLogin;
-	}
-
-	public String getLastLoginIp() {
-		return lastLoginIp;
-	}
-
-	public void setLastLoginIp(String lastLoginIp) {
-		this.lastLoginIp = lastLoginIp;
-	}
-
-	public String getLastLoginDevice() {
-		return lastLoginDevice;
-	}
-
-	public void setLastLoginDevice(String lastLoginDevice) {
-		this.lastLoginDevice = lastLoginDevice;
-	}
-
-	public String getResetToken() {
-		return resetToken;
-	}
-
-	public User(Long id, String name, String email, String password, String phone, Role role, LocalDateTime createdAt,
-			LocalDateTime updatedAt, String resetToken, LocalDateTime tokenExpiry, boolean isDeleted) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.email = email;
-		this.password = password;
-		this.phone = phone;
-		this.role = role;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.resetToken = resetToken;
-		this.tokenExpiry = tokenExpiry;
-		this.isDeleted = isDeleted;
-	}
-
-	public boolean isDeleted() {
-		return isDeleted;
-	}
-
-	public void setDeleted(boolean isDeleted) {
-		this.isDeleted = isDeleted;
-	}
-
-	public void setResetToken(String resetToken) {
-		this.resetToken = resetToken;
-	}
-
-	public LocalDateTime getTokenExpiry() {
-		return tokenExpiry;
-	}
-
-	public void setTokenExpiry(LocalDateTime tokenExpiry) {
-		this.tokenExpiry = tokenExpiry;
-	}
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+	private final List<UserLoginActivity> loginActivities = new ArrayList<>();
 
 	public User() {
-
 	}
 
-	public User(Long id, String name, String email, String password, String phone, Role role, LocalDateTime createdAt,
-			LocalDateTime updatedAt) {
-		super();
-		this.id = id;
+	public User(String name, String email, String password, String phone, Role role,
+			LocalDateTime createdAt, LocalDateTime updatedAt, String resetToken,
+			LocalDateTime tokenExpiry, boolean isDeleted, LocalDateTime lastLogin,
+			String lastLoginIp, String lastLoginDevice) {
 		this.name = name;
 		this.email = email;
 		this.password = password;
@@ -142,6 +67,12 @@ public class User {
 		this.role = role;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+		this.resetToken = resetToken;
+		this.tokenExpiry = tokenExpiry;
+		this.isDeleted = isDeleted;
+		this.lastLogin = lastLogin;
+		this.lastLoginIp = lastLoginIp;
+		this.lastLoginDevice = lastLoginDevice;
 	}
 
 	public Long getId() {
@@ -184,6 +115,14 @@ public class User {
 		this.phone = phone;
 	}
 
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
+	}
+
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -200,19 +139,93 @@ public class User {
 		this.updatedAt = updatedAt;
 	}
 
-	public Role getRole() {
-		return role;
+	public String getResetToken() {
+		return resetToken;
 	}
 
-	public void setRole(Role role) {
-		this.role = role;
+	public void setResetToken(String resetToken) {
+		this.resetToken = resetToken;
+	}
+
+	public LocalDateTime getTokenExpiry() {
+		return tokenExpiry;
+	}
+
+	public void setTokenExpiry(LocalDateTime tokenExpiry) {
+		this.tokenExpiry = tokenExpiry;
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		isDeleted = deleted;
+	}
+
+	public LocalDateTime getLastLogin() {
+		return lastLogin;
+	}
+
+	public void setLastLogin(LocalDateTime lastLogin) {
+		this.lastLogin = lastLogin;
+	}
+
+	public String getLastLoginIp() {
+		return lastLoginIp;
+	}
+
+	public void setLastLoginIp(String lastLoginIp) {
+		this.lastLoginIp = lastLoginIp;
+	}
+
+	public String getLastLoginDevice() {
+		return lastLoginDevice;
+	}
+
+	public void setLastLoginDevice(String lastLoginDevice) {
+		this.lastLoginDevice = lastLoginDevice;
+	}
+
+	public List<UserLoginActivity> getLoginActivities() {
+		return loginActivities;
+	}
+
+	public void setLoginActivities(List<UserLoginActivity> loginActivities) {
+		this.loginActivities.clear();
+		if (loginActivities != null) {
+			for (UserLoginActivity activity : loginActivities) {
+				activity.setUser(this); 
+				this.loginActivities.add(activity);
+			}
+		}
+	}
+
+	public void addLoginActivity(UserLoginActivity activity) {
+		loginActivities.add(activity);
+		activity.setUser(this);
+	}
+
+	public void removeLoginActivity(UserLoginActivity activity) {
+		loginActivities.remove(activity);
+		activity.setUser(null);
 	}
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", name=" + name + ", email=" + email + ", password=" + password + ", phone=" + phone
-				+ ", role=" + role + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", resetToken="
-				+ resetToken + ", tokenExpiry=" + tokenExpiry + ", isDeleted=" + isDeleted + "]";
+		return "User{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", email='" + email + '\'' +
+				", phone='" + phone + '\'' +
+				", role=" + role +
+				", createdAt=" + createdAt +
+				", updatedAt=" + updatedAt +
+				", isDeleted=" + isDeleted +
+				", lastLogin=" + lastLogin +
+				", lastLoginIp='" + lastLoginIp + '\'' +
+				", lastLoginDevice='" + lastLoginDevice + '\'' +
+				'}';
 	}
 
 }

@@ -16,6 +16,11 @@ import com.librarysystem.dto.ErrorResponse;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, WebRequest request) {
+        return buildResponse(ex, HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", request);
+    }
+
     @ExceptionHandler(EmailSendFailedException.class)
     public ResponseEntity<ErrorResponse> handleEmailSendFail(EmailSendFailedException ex, WebRequest request) {
         return buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL_SEND_FAILED", request);
@@ -37,7 +42,7 @@ public class GlobalExceptionHandler {
         return buildResponse(ex, HttpStatus.UNAUTHORIZED, "TOKEN_EXPIRED", request);
     }
 
-// via OldPassword change Password
+    // via OldPassword change Password
     @ExceptionHandler(IncorrectOldPasswordException.class)
     public ResponseEntity<ErrorResponse> handleTokenExpired(IncorrectOldPasswordException ex, WebRequest request) {
         return buildResponse(ex, HttpStatus.UNAUTHORIZED, "Incorrect_Old_Password", request);
@@ -79,7 +84,7 @@ public class GlobalExceptionHandler {
     }
 
     /// token ke time
-	@ExceptionHandler(TokenGenerationException.class)
+    @ExceptionHandler(TokenGenerationException.class)
     public ResponseEntity<ErrorResponse> handleTokenError(TokenGenerationException ex, WebRequest request) {
         return buildResponse(ex, HttpStatus.UNAUTHORIZED, "Token_Generation_Exception", request);
     }
@@ -95,7 +100,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleAll(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong: " + ex.getMessage());
     }
-    //ye  used hai vaidation ke error ko handr karne ke iye.
+    // ye used hai vaidation ke error ko handr karne ke iye.
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {

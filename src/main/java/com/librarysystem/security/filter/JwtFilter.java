@@ -1,6 +1,7 @@
 package com.librarysystem.security.filter;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
 	@Autowired
 	private JwtUtil jwtUtil;
-	
+
 	@Autowired
 	private BlacklistedTokenService blacklistedTokenService;
 
@@ -68,9 +69,15 @@ public class JwtFilter extends OncePerRequestFilter {
 				String role = jwtUtil.extractRole(jwt).name();
 				SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
 
-				UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, null,
-						Collections.singleton(authority));
-				SecurityContextHolder.getContext().setAuthentication(token);
+				Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+				authorities.addAll(userDetails.getAuthorities().stream()
+						.map(a -> new SimpleGrantedAuthority(a.getAuthority()))
+						.toList());
+				authorities.add(authority);
+
+				 UsernamePasswordAuthenticationToken token =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(token);
 			}
 		}
 

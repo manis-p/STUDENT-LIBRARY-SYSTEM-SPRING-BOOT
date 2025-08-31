@@ -1,119 +1,138 @@
+
 # 📚 Student Library System
 
-**Student Library System** is a full-featured web application that handles user authentication, profile management, and secure access using **Spring Security with JWT** and **2-Factor Authentication (2FA)** via email OTP. It supports **multi-device login management**, **refresh token handling**, and **secure logout with blacklist-based token invalidation**.
+**Student Library System** – An End-to-End **Backend Application** built with **Spring Boot**, featuring **User & Admin Panels**, **Secure Authentication (Spring Security + JWT)**, **Role-Based Access**, **Multi-Device Login Management**, **Refresh Tokens**, **Blacklist-Based Logout**, and planned **Payment System Integration**.
 
 ---
 
 ## ✅ Features
 
-* 🔐 **User Signup**
-* 🔐 **Login with 2FA (OTP via Email) + Spring Security JWT**
-* 👤 **Get User Profile**
-* ✏️ **Update Profile**
-* ❌ **Soft Delete Profile** – Marks user as deleted with a message if trying to login again
-* 🔁 **Change Password**
-🧪 Unit Testing with Mockito & JUnit
-🛡️ Custom Validation + Exception Handling
+### 🚀 Current Progress
 
-  * Using Old Password
-  * Using Email OTP
-* 📧 **Forgot Password**
+I am building the **backend** of a complete Student Library System. So far, the following modules are implemented:
 
-  * Sends Email OTP and Reset Link via JavaMailSender
-* 🔄 **Access + Refresh Token Authentication**
+#### 👤 User Panel
 
-  * Refresh token used to generate new access token
-  * Blacklist active access token on logout.
-  * Tokens auto-removed from DB after expiry (for memory optimization)
-* 📱 **Device-Level Session Management**
+* **Signup** – Register new users with validation.
+* **Login with 2FA** – Email OTP + JWT-based authentication using Spring Security.
+* **Get Profile** – Fetch user details securely.
+* **Update Profile** – Modify user information.
+* **Soft Delete Profile** – Marks user as deleted and prevents login with the same account.
+* **Change Password** – Securely update password after authentication.
 
-  * Single-device logout
-  * Specific device logout
-* ⏳ **Token Expiry Tracking + Auto Cleanup**
+#### 🛠️ Admin Panel
 
- ## 🛡️ Validation, Exception Handling & Unit Testing
+* **Admin Authentication** – Secure login with Spring Security & JWT.
+* **Manage Users** – View, update, or soft delete users.
+* **Role-Based Access** – Access is restricted using roles (`USER`, `ADMIN`).
+
+#### 🧪 Additional Features
+
+* **Unit Testing** – Using `JUnit` & `Mockito` for service layer testing.
+* **Custom Validation & Exception Handling** – Includes validation via DTO annotations (`@NotBlank`, `@Email`, `@Pattern`, etc.) and global exception handling.
+* **Forgot Password** – Sends email OTP & reset link via JavaMailSender.
+* **Access + Refresh Token Authentication** – Refresh token used to generate new access token; blacklist active access tokens on logout; tokens auto-removed from DB after expiry.
+* **Device-Level Session Management** – Single-device logout, specific device logout.
+* **Token Expiry Tracking + Auto Cleanup** – Tokens removed automatically after expiry for memory optimization.
+
+---
+
+## 🛡️ Validation, Exception Handling & Unit Testing
 
 ### ✅ Validation
 
-User inputs are strictly validated using annotations like:
-
-- `@NotBlank`, `@Email`, `@Pattern`, `@Size`, etc.
-- Defined inside `DTO` classes.
-
-✅ Ensures clean and valid data before hitting service layer.
-
----
+* Strict input validation using DTO annotations (`@NotBlank`, `@Email`, `@Pattern`, `@Size`)
+* Ensures clean and valid data before hitting service layer.
 
 ### ❗ Exception Handling
 
 #### 📦 Custom Exceptions (`exception` package):
-- `UserNotFoundException`
-- `OtpExpiredException`
-- `InvalidTokenException`
-- `AlreadyDeletedException`
-- And more...
+
+* `UserNotFoundException`
+* `OtpExpiredException`
+* `InvalidTokenException`
+* `AlreadyDeletedException`
+* And more...
 
 #### 🌐 Global Exception Handler:
-- Centralized handling via `@ControllerAdvice`
-- Handles:
-  - Field validation errors
-  - Custom exceptions
-  - Unexpected server errors
-- Sends clean error responses to frontend.
 
----
+* Centralized handling via `@ControllerAdvice`.
+* Handles field validation errors, custom exceptions, and unexpected server errors.
+* Sends clean error responses to frontend.
 
 ### 🧪 Unit Testing
 
-Service layer tested using:
-
-- 🔍 `JUnit 5` + `Mockito`
-- ✅ Tests located in `unit` package
-
-Benefits:
-- Ensures business logic correctness
-- Makes system reliable & maintainable
+* Service layer tested using `JUnit 5` + `Mockito`.
+* Tests located in the `unit` package.
+* Ensures business logic correctness and system reliability.
 
 ---
 
-
 ## 🔗 API Endpoints
 
-| Method | Endpoint         | Description                                 |
-| ------ | ---------------- | ------------------------------------------- |
-| POST   | /signup          | User registration                           |
-| POST   | /login           | User login with JWT + 2FA                   |
-| GET    | /profile         | Get user profile (secured)                  |
-| PUT    | /update          | Update user profile                         |
-| DELETE | /delete          | Soft delete user profile                    |
-| POST   | /verify-otp      | 2FA OTP verification                        |
-| POST   | /logout          | Logout from current device                  |
-| POST   | /logout-device   | Logout from specific device                 |
-| POST   | /refresh         | Generate new access token via refresh token |
-| POST   | /change-password | Change password using old password          |
-| POST   | /forgot-password | Send OTP & reset link to email              |
-| POST   | /reset-password  | Reset password using email and token        |
+### **1️⃣ `api/user`**
+
+| Method | Endpoint      | Description                                      |
+| ------ | ------------- | ------------------------------------------------ |
+| POST   | /signup       | Register a new user                              |
+| POST   | /signup/admin | Register a new admin                             |
+| POST   | /login        | User login with credentials                      |
+| GET    | /user/profile | Fetch logged-in user's profile                   |
+| PUT    | /user/update  | Update logged-in user's profile                  |
+| DELETE | /delete/{id}  | Soft delete user profile by ID                   |
+| POST   | /verify-otp   | Verify 2FA OTP during login or sensitive actions |
+
+### **2️⃣ `api/session`**
+
+| Method | Endpoint          | Description                                     |
+| ------ | ----------------- | ----------------------------------------------- |
+| POST   | /logoutuser       | Logout from the current device                  |
+| POST   | /logoutAllDevices | Logout from all devices associated with user    |
+| POST   | /refresh          | Generate a new access token using refresh token |
+
+### **3️⃣ `api/auth`**
+
+| Method | Endpoint         | Description                                             |
+| ------ | ---------------- | ------------------------------------------------------- |
+| POST   | /change-password | Change password using old password for authorized users |
+| POST   | /forgot-password | Send OTP & reset link to registered email               |
+| POST   | /reset-password  | Reset password by verifying OTP or token                |
+
+### **4️⃣ `api/admin`**
+
+| Method | Endpoint                           | Description                              |
+| ------ | ---------------------------------- | ---------------------------------------- |
+| GET    | /single/users/{id}                 | Get details of a single user             |
+| DELETE | /delete/users/{id}                 | Delete a single user                     |
+| DELETE | /delete/multiple/users             | Delete multiple users                    |
+| PUT    | /update/users/{id}                 | Update user information                  |
+| POST   | /admin/users/{id}/role/change      | Change role of a single user             |
+| POST   | /admin/users/roles/change/multiple | Change roles of multiple users           |
+| GET    | /admin/users/search                | Search users by name or email            |
+| GET    | /filterby/role/{role}              | Filter users by role                     |
+| GET    | /all/users                         | Get all users                            |
+| GET    | /loginhistory/{userId}             | Get login history of a user              |
+| GET    | /unique-login-users-count          | Get unique count of logged-in users      |
+| POST   | /force-send-reset-link/{userId}    | Force send password reset link to a user |
 
 ---
 
 ## 🧰 Package Structure
 
-Main base package: com.librarysystem
-
-| Package Name    | Purpose                                                          |
-| --------------- | ---------------------------------------------------------------- |
-| config          | Spring Security configuration (JWT setup, filters, auth rules)   |
-| controller      | REST Controllers: AuthController, SessionController, UserHandler |
-| dto             | DTOs for request & response data                                 |
-| email           | Email-related logic (sending OTP, reset links)                   |
-| exception       | Custom exception handling (global and local)                     |
-| model           | Entity classes (e.g., User)                                      |
-| otp             | OTP generation, validation, and expiry                           |
-| repository      | Spring Data JPA repositories (DB interaction)                    |
-| filter          | JWT filter – intercepts and validates every request              |
-| securityservice | Spring Security logic (UserDetailsService, token handling)       |
-| service         | Business logic: signup, login, password reset/change             |
-| util            | Utility classes (JWT utility, token generation, email helper)    |
+| Package Name    | Purpose                                                                           |
+| --------------- | --------------------------------------------------------------------------------- |
+| config          | Spring Security configuration (JWT setup, filters, auth rules)                    |
+| controller      | REST Controllers: AuthController, SessionController, UserHandler, AdminController |
+| dto             | DTOs for request & response data                                                  |
+| email           | Email-related logic (sending OTP, reset links)                                    |
+| exception       | Custom exception handling (global and local)                                      |
+| model           | Entity classes (e.g., User)                                                       |
+| otp             | OTP generation, validation, and expiry                                            |
+| repository      | Spring Data JPA repositories (DB interaction)                                     |
+| filter          | JWT filter – intercepts and validates every request                               |
+| securityservice | Spring Security logic (UserDetailsService, token handling)                        |
+| service         | Business logic: signup, login, password reset/change                              |
+| util            | Utility classes (JWT utility, token generation, email helper)                     |
 
 ---
 
@@ -121,10 +140,10 @@ Main base package: com.librarysystem
 
 | Layer                | Technology                                                |
 | -------------------- | --------------------------------------------------------- |
-| 👨‍💻 Language          | Java 17                                                   |
+| 👨‍💻 Language       | Java 17                                                   |
 | ⚙️ Backend Framework | Spring Boot (REST APIs)                                   |
 | 🔐 Security          | Spring Security + JWT + 2FA OTP                           |
-| 🗃️ Database          | MySQL + Spring Data JPA                                   |
+| 🗃️ Database         | MySQL + Spring Data JPA                                   |
 | ✉️ Email Services    | JavaMailSender (Gmail SMTP)                               |
 | 🔄 Token Handling    | Access Token + Refresh Token (Blacklist + Expiry Cleanup) |
 | 📬 API Documentation | Swagger UI (OpenAPI 3)                                    |
@@ -137,16 +156,16 @@ Main base package: com.librarysystem
 
 ## 🔐 Security & Token Flow
 
-* **JWT** is used for securing endpoints.
-* **2FA** is implemented using email OTP during login.
+* **JWT** secures endpoints.
+* **2FA** via email OTP during login.
 * **Access Token + Refresh Token**:
 
-  * Refresh token helps generate new access token.
-  * Both tokens are stored and cleaned up after expiry.
-  * On logout, access token is blacklisted, refresh token is removed.
+  * Refresh token generates new access token.
+  * Tokens stored and cleaned after expiry.
+  * Logout blacklists access token and removes refresh token.
 * **Soft Delete Logic**:
 
-  * When a user is deleted, login shows a friendly error message.
+  * Deleted users see a friendly error on login.
 * **Multi-device support**:
 
   * Each login gets a unique token.
@@ -164,125 +183,66 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-➡️ App will run at: `http://localhost:8080`
+➡️ App runs at: `http://localhost:8080`
 
 ---
 
 ## 🔍 Swagger UI Preview
-### 1. 🔐 Login Endpoint (2FA OTP)
-
-![Login API - OTP Flow](assets/swagger-login.jpg)
-
----
-
-### 2. ✅ Verify OTP & Get JWT Tokens
-
-![Verify OTP - Token Response](assets/verify.jpg)
-
----
-
-### 3. 📋 API Documentation Overview
-
-![All Endpoints - Swagger UI](assets/swagger-all-endpoints.jpg)
-
-
-The project includes **integrated Swagger UI** for easy API exploration and testing.
 
 ### 1. 🔐 Login Endpoint (2FA OTP)
 
-After submitting email/password, OTP is sent to your email.
-This ensures 2-Factor Authentication during login.
-
----
+After submitting email/password, OTP is sent to email to ensure 2FA login.
 
 ### 2. ✅ Verify OTP & Get JWT Tokens
 
-On submitting correct OTP, system returns:
-
-* 🔑 AccessToken
-* 🔁 RefreshToken
-
-These tokens are used to access secure endpoints and manage sessions.
-
----
+Returns **AccessToken** and **RefreshToken** for secure access.
 
 ### 3. 📋 API Documentation Overview
 
-The Swagger UI shows:
+Swagger UI shows grouped endpoints, HTTP methods, and allows real-time testing.
 
-* Grouped endpoints (AuthController, SessionController, etc.)
-* Proper HTTP methods (GET, POST, PUT, DELETE)
-* Real-time testing with input fields
-
----
-
-### 🔐 Token Authorization on Swagger
-
-Once you have the accessToken, click on **"Authorize"** in top-right of Swagger and enter:
+**Token Authorization on Swagger:**
+Enter your token under **"Authorize"**:
 
 ```bash
 Bearer your_access_token_here
 ```
 
-Now you can test secured APIs like /profile, /update, /logout, etc.
+Test secured APIs like `/profile`, `/update`, `/logout`, etc.
 
 ---
 
 ## 👨‍💼 Developer Info
 
-* 👤 Name: Manish Jha
-* 📧 Email: [jham7340@gmail.com]
-* 🌍 Location: India
+* Name: Manish Jha
+* Email: [jham7340@gmail.com](mailto:jham7340@gmail.com)
+* Location: India
 
 ---
 
 ## ⚙️ `application.properties` Configuration
 
 ```properties
-# --------------------------------------
-# Spring Datasource Configuration
-# --------------------------------------
-spring.datasource.name=student
-spring.application.name=StudentLibrarySystem
+# Datasource
 spring.datasource.url=jdbc:mysql://localhost:3306/studentlibrary
 spring.datasource.username=root
 spring.datasource.password=7493831815Mj
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
-# --------------------------------------
-# JPA / Hibernate Configuration
-# --------------------------------------
+# JPA / Hibernate
 spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.use_sql_comments=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.format_sql=true
-spring.profiles.active=default
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 
-# --------------------------------------
-# Email Configuration (JavaMailSender)
-# -------------------------------------
+# Email (JavaMailSender)
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=jmak7340@gmail.com
 spring.mail.password=jwgurmwzdummd
 spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=true
-spring.mail.properties.mail.smtp.connectiontimeout=5000
-spring.mail.properties.mail.smtp.timeout=5000
-spring.mail.properties.mail.smtp.writetimeout=5000
+spring.mail
 
-# --------------------------------------
-# Mail Debug Logs
-# --------------------------------------
-logging.level.org.springframework.mail=DEBUG
-logging.level.org.apache.commons.mail=DEBUG
-```
-
-
-
-🚀 More features like **book module**, **admin dashboard**, and **borrowing history** coming soon!
-
+🚀 More features like **book module**, **admin dashboard**, and **borrowing history** coming soon! 
 
 
 

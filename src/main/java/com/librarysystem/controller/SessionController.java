@@ -30,7 +30,7 @@ import com.librarysystem.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/session")
 public class SessionController {
 
     @Autowired
@@ -69,7 +69,7 @@ public class SessionController {
         }
 
         // 1. Get userId from request
-        userId = Long.parseLong(request.get("userIdStr"));
+        userId = Long.parseLong(request.get("userIdStr"));// need to work on it
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
 
         // 2. Delete refresh token
@@ -102,7 +102,7 @@ public class SessionController {
         try {
             Long userId = Long.parseLong(request.get("userId"));
 
-            // 1. Fetch the user
+            // 1. Fetch the user need to work on it
             User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
             // 2. Delete all refresh tokens of this user
@@ -127,6 +127,7 @@ public class SessionController {
     }
 
     @PostMapping("/refresh")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
 

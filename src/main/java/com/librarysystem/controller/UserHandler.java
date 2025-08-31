@@ -35,7 +35,9 @@ import com.librarysystem.model.ActiveAccessToken;
 import com.librarysystem.model.RefreshToken;
 import com.librarysystem.model.Role;
 import com.librarysystem.model.User;
+import com.librarysystem.model.UserLoginActivity;
 import com.librarysystem.repository.ActiveAccessTokenRepository;
+import com.librarysystem.repository.UserLoginActivityRepository;
 import com.librarysystem.repository.UserRepository;
 import com.librarysystem.security.service.CustomUserDetails;
 import com.librarysystem.security.service.CustomUserDetailsService;
@@ -71,7 +73,8 @@ public class UserHandler {
 
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private UserLoginActivityRepository userLoginActivityRepository;
     @Autowired
     private UserService userService;
 
@@ -79,10 +82,18 @@ public class UserHandler {
     public ResponseEntity<?> userSignUp(@Valid @RequestBody SignupRequestDto signupRequestDto) {
 
         User savedUser = userServiceImpl.registerUser(signupRequestDto);
+        // System.out.println("Received request: " + signupRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+
+    }
+
+    // this URL for the the admin panel to signup
+    @PostMapping("/signup/admin")
+    public ResponseEntity<?> adminSignUp(@Valid @RequestBody SignupRequestDto signupRequestDto) {
+
+        User savedAdmin = userServiceImpl.registerAdmin(signupRequestDto);
         System.out.println("Received request: " + signupRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);    
-
-
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAdmin);
 
     }
 
@@ -107,15 +118,15 @@ public class UserHandler {
 
     }
 
-    @GetMapping("/profile")
-    // @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/user/profile")
+     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> getProfile(@RequestParam @NotBlank @Email String email) {
 
         User user = userServiceImpl.getUserProfile(email);
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/update")
+    @PutMapping("/user/update")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> updateUser(@Valid @RequestParam String email, @RequestBody UpdateProfileRequestDto dto) {
 
@@ -135,7 +146,6 @@ public class UserHandler {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest otpRequest, HttpServletRequest request) {
-
         String ipAddress = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
         // Validate OTP
@@ -174,10 +184,21 @@ public class UserHandler {
 
         // Update login time
         try {
+            // this for the qick acces
             user.setLastLogin(LocalDateTime.now());
             user.setLastLoginIp(ipAddress);
             user.setLastLoginDevice(userAgent);
             userRepository.save(user);
+
+            // this is for the login history
+            UserLoginActivity UserLoginActivity = new UserLoginActivity();
+            UserLoginActivity.setUser(user);
+            UserLoginActivity.setLoginTime(LocalDateTime.now());
+            UserLoginActivity.setIpAddress(ipAddress);
+            UserLoginActivity.setDevice(userAgent);
+            userLoginActivityRepository.save(UserLoginActivity);
+            // UserLoginActivity.setLocation("Unknown");
+
         } catch (Exception e) {
             throw new DatabaseOperationException("Failed to save Update login time ");
 

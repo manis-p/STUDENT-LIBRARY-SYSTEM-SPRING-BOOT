@@ -30,7 +30,7 @@ public class JwtUtil {
 	public String generateToken(String email, Role role) {
 		return Jwts.builder().setSubject(email).claim("role", role.name())
 				.setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 2)) // 2 minutes
+				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 50)) // 2 minutes
 				.signWith(getSignInKey(), SignatureAlgorithm.HS256).compact();
 	}
 

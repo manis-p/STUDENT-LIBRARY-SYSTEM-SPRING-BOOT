@@ -30,9 +30,16 @@ public class EmailService {
 			} else { // password reset
 				helper.setSubject("Password Reset Request - Student Library System");
 				htmlContent = "<p>Dear <strong>" + userName + "</strong>,</p>"
-						+ "<p>We received a request to reset your password.</p>"
-						+ "<p>Click below to reset your password:</p>" + "<p><a href=\"" + resetLink
-						+ "\">Reset Password</a></p>" + "<p>This link is valid for <strong>5 minutes</strong>.</p>";
+						+ "<p>We received a request to reset your password.</p>";
+
+				if (otp != null) {
+					htmlContent += "<p>Your OTP is: <strong style='color:green; font-size:18px;'>" + otp
+							+ "</strong></p>";
+				}
+
+				htmlContent += "<p>Click below to reset your password:</p>"
+						+ "<p><a href=\"" + resetLink + "\">Reset Password</a></p>"
+						+ "<p>This link is valid for <strong>5 minutes</strong>.</p>";
 			}
 
 			htmlContent += "<br/><p>Thanks,<br/>Student Library System Team</p>";

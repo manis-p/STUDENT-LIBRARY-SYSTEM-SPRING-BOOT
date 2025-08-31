@@ -18,12 +18,12 @@ import com.librarysystem.model.User;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/auth")
 public class AuthController {
-
     @Autowired
     private UserService userService;
 
+    // By ut old password and new password
     // Change password (authenticated user)
     @PostMapping("/change-password")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")

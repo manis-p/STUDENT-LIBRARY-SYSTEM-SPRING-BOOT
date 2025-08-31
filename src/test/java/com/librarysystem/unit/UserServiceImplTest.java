@@ -99,14 +99,14 @@ public class UserServiceImplTest {
 
         UpdateProfileRequestDto dto = new UpdateProfileRequestDto();
         dto.setName("Updated Name");
-        dto.setPassword("newPass");
+        //dto.setPassword("newPass");
         dto.setPhone("9999999999");
 
         User existingUser = new User();
         existingUser.setEmail(email);
         existingUser.setDeleted(false);
 
-        when(userRepository.findByEmailAndIsDeletedFalse(email)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(existingUser));
         when(userRepository.save(existingUser)).thenReturn(existingUser);
 
         User result = userService.updateUserProfile(email, dto);
